@@ -44,6 +44,56 @@ var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+// move cards
+$(".card .list-group").sortable({
+  connectWith: $(".card .list-group"),
+  scroll: false,
+  tolerance: "pointer",
+  helper: "clone",
+  activate: function(event, ui) {
+    console.log("activate", ui);
+  },
+  deactivate: function(event, ui) {
+    console.log("deactivate", ui);
+  },
+  over: function(event) {
+    console.log("over", event);
+  },
+  out: function(event) {
+    console.log("out", event);
+  },
+  update: function() {
+
+    var tempArr = [];
+
+    $(this)
+      .children()
+        .each(function() {      
+      // add task data to the temp array as an object
+      tempArr.push({
+        text: $(this)
+        .find("p")
+        .text()
+        .trim(),
+        date: $(this)
+        .find("span")
+        .text()
+        .trim()
+      });
+    });
+
+    // trim down list's ID to match object property
+    var arrName = $(this)
+      .attr("id")
+      .replace("list-","");
+    // update array on tasks object and save 
+    tasks[arrName] = tempArr;
+    saveTasks();
+
+    console.log(tempArr)
+  }
+});
+
 // Select element with .list-group, on click initiate function within p element
 $(".list-group").on("click", "p", function() {
   // Assign text this (event.target)
@@ -68,8 +118,8 @@ $(".list-group").on("click", "p", function() {
 $(".list-group").on("blur", "textarea", function(){
   // Get textareas current value
   var text = $(this)
-  .val()
-  .trim();
+    .val()
+    .trim();
 
   // Get parent ul's id
   var status = $(this)
@@ -123,12 +173,13 @@ $(".list-group").on("blur", "input[type='text']", function() {
   var date = $(this)
     .val()
     .trim();
+    console.log("date this", this)
 
   // get the parent ul's id attribute
   var status = $(this)
-  .closest(".list-group")
-  .attr("id")
-  .replace("list-","");
+    .closest(".list-group")
+    .attr("id")
+    .replace("list-","");
 
   // get the task's position in th elist of outher li elements
   var index = $(this)
@@ -147,6 +198,22 @@ $(".list-group").on("blur", "input[type='text']", function() {
   // replace input
   $(this).replaceWith(taskSpan);
 });
+
+// delete cards
+$("#trash").droppable({
+  accept: ".card .list-group-item",
+  tolerance: "touch",
+  drop: function(event, ui) {
+    console.log("drop");
+    ui.draggable.remove();
+  },
+  over: function(event,ui) {
+    console.log("over");
+  },
+  out: function(event, ui) {
+    console.log("out");
+  }
+})
 
 
 // modal was triggered
