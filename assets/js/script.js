@@ -13,6 +13,8 @@ var createTask = function(taskText, taskDate, taskList) {
   // append span and p element to parent li
   taskLi.append(taskSpan, taskP);
 
+  // check due date
+  auditTask(taskLi);
 
   // append to ul list on the page
   $("#list-" + taskList).append(taskLi);
@@ -43,6 +45,11 @@ var loadTasks = function() {
 var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
+
+$("#modalDueDate").datepicker({
+  minDate: 0
+});
+
 
 // move cards
 $(".card .list-group").sortable({
@@ -164,11 +171,19 @@ $(".list-group").on("click", "span", function() {
   $(this).replaceWith(dateInput);
 
   // Focus element on click
+  dateInput.datepicker({
+    minDate: 0,
+    onClose: function() {
+      // when calendar is closed, force a change event
+      $(this).trigger("change");
+    }
+  });
+  // automatically bring up the calendar
   dateInput.trigger("focus");
 });
 
-// On blur update date
-$(".list-group").on("blur", "input[type='text']", function() {
+// On change update date
+$(".list-group").on("change", "input[type='text']", function() {
   // get current text
   var date = $(this)
     .val()
@@ -197,6 +212,9 @@ $(".list-group").on("blur", "input[type='text']", function() {
 
   // replace input
   $(this).replaceWith(taskSpan);
+
+  // Pass task's li element into auditTask() to check new due date 
+  auditTask($(taskSpan).closest("list-group-item"));
 });
 
 // delete cards
@@ -215,6 +233,27 @@ $("#trash").droppable({
   }
 })
 
+var auditTask = function(taskEl) {
+  console.log(taskEl);
+  var date = $(taskEl)
+    .find("span")
+    .text()
+    .trim();
+
+    // create moment object date in local format, and set the hour to 1700hrs
+  var time = moment(date, "L").set("hour", 17);
+
+  // remove old classes
+  $(taskEl).removeClass("list-group-item-warning list-group-item-danger");
+
+  // apply new class if task is near/over due date
+  if(moment().isAfter(time)){
+    $(taskEl).addClass("list-group-item-danger");
+    // else if moment is greater than or equal to two days add warning class
+  } else if (Math.abs(moment().diff(time, "days"))<= 2){
+    $(taskEl).addClass("list-group-item-warning")
+  }
+};
 
 // modal was triggered
 $("#task-form-modal").on("show.bs.modal", function() {
